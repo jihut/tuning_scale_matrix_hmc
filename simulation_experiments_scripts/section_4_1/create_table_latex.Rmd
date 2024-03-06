@@ -1,0 +1,53 @@
+---
+title: "create_table_latex"
+output: html_document
+---
+
+```{r, warning=FALSE, echo=FALSE}
+library(reticulate)
+
+rm(list = ls())
+
+for(i in 1:4){
+  name <- paste("G", i, "/relevant_rstan_table_G", i, ".RDS", sep = "")
+  table_name <- paste("table_nr", i, sep = "")
+  assign(table_name, readRDS(name))
+  
+  if(i == 1){
+    final_table <- eval(parse(text = table_name))
+  } else {
+    final_table <- rbind(final_table, eval(parse(text = table_name)))
+  }
+}
+
+use_virtualenv("/Users/jimmytran/Documents/General Python Workspace/my_env") # Choose own python virtual environment here
+
+```
+
+```{python}
+import pandas as pd
+import numpy as np
+
+table = r.final_table
+
+pivot_table = table.astype({'method' : pd.CategoricalDtype(['VARI', 'ISG', 'MCT'], ordered = True)}).pivot(
+  index = ['name', 'position_coordinate'],
+  columns = 'method',
+  values = ['n_eff', 'mean_sd_s_elements', 'n_eff_per_100000_eval_ode']
+)
+
+pivot_table.head()
+```
+
+```{python}
+latex = pivot_table.to_latex(
+        index=True,
+        escape=False,
+        sparsify=True,
+        multirow=True,
+        multicolumn=True,
+        multicolumn_format='c'
+    )
+
+print(latex)
+```
